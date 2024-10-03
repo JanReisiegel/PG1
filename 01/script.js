@@ -79,9 +79,6 @@ window.addEventListener("DOMContentLoaded", () => {
       alphaData[i + 1] = aplha; //green channel
       alphaData[i + 2] = aplha; //blue channel
       alphaData[i + 3] = 255; //alpha channel
-      if (i == redData.length - 4) {
-        console.log(aplha);
-      }
     }
 
     ctx4.putImageData(redChannel, 0, 0);
@@ -104,18 +101,16 @@ window.addEventListener("DOMContentLoaded", () => {
     for (let i = 0; i < cData.length; i += 4) {
       const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
       const [c, m, y, k] = rgbToCmyk(r, g, b);
-      cData[i] = c * 255;
-      cData[i + 1] = 255;
-      cData[i + 2] = 255;
-      mData[i] = 255;
-      mData[i + 1] = m * 255;
-      mData[i + 2] = 255;
-      yData[i] = 255;
-      yData[i + 1] = 255;
-      yData[i + 2] = y * 255;
-      kData[i] = k * 255;
-      kData[i + 1] = k * 255;
-      kData[i + 2] = k * 255;
+      cData[i] = 255 - (c - k) * 255;
+      cData[i + 1] = cData[i + 2] = 255;
+
+      mData[i] = mData[i + 2] = 255;
+      mData[i + 1] = 255 - (m - k) * 255;
+
+      yData[i] = yData[i + 1] = 255;
+      yData[i + 2] = 255 - (y - k) * 255;
+
+      kData[i] = kData[i + 1] = kData[i + 2] = (1 - k) * 255;
     }
     ctx5.putImageData(cChannel, 0, 0);
     ctx5.putImageData(mChannel, imgWidth, 0);
