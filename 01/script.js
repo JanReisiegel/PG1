@@ -46,76 +46,98 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     ctx3.putImageData(imageData3, 0, 0);
 
-    //canvas 4. stupně šedi s respektováním citlivosti lidského oka na základní barvy RGB
+    //canvas na základní barvy RGB
     const ctx4 = canvas4.getContext("2d");
-    const width = canvas4.width / 4;
-    const height = canvas4.height;
+    ctx4.drawImage(image, 0, 0, imgWidth / 2, imgHeight / 2);
 
-    const redChannel = ctx1.getImageData(0, 0, imgWidth, imgHeight);
+    var img4 = ctx4.getImageData(0, 0, imgWidth / 2, imgHeight / 2);
+    var imgData4 = img4.data;
+
+    const redChannel = ctx4.createImageData(imgWidth / 2, imgHeight / 2);
     const redData = redChannel.data;
-    const greenChannel = ctx1.getImageData(0, 0, imgWidth, imgHeight);
+    const greenChannel = ctx4.createImageData(imgWidth / 2, imgHeight / 2);
     const greenData = greenChannel.data;
-    const blueChannel = ctx1.getImageData(0, 0, imgWidth, imgHeight);
+    const blueChannel = ctx4.createImageData(imgWidth / 2, imgHeight / 2);
     const blueData = blueChannel.data;
-    const alphaChannel = ctx1.getImageData(0, 0, imgWidth, imgHeight);
+    const alphaChannel = ctx4.createImageData(imgWidth / 2, imgHeight / 2);
     const alphaData = alphaChannel.data;
 
-    for (let i = 0; i < redData.length; i += 4) {
+    for (let i = 0; i < imgData4.length; i += 4) {
+      var red = imgData4[i];
+      var green = imgData4[i + 1];
+      var blue = imgData4[i + 2];
+      var alpha = imgData4[i + 3];
+
       //RED Channel
-      redData[i + 1] = 0; //green channel
-      redData[i + 2] = 0; //blue channel
+      redData[i] = red; //red channel
+      redData[i + 1] = redData[i + 2] = 0; //green and channel
+      redData[i + 3] = alpha; //alpha channel
 
       //GREEN Channel
-      greenData[i] = 0; //red channel
-      greenData[i + 2] = 0; //blue channel
+      greenData[i] = greenData[i + 2] = 0; //red and blue channel
+      greenData[i + 1] = green; //green channel
+      greenData[i + 3] = alpha; //alpha channel
 
       //BLUE Channel
-      blueData[i] = 0; //red channel
-      blueData[i + 1] = 0; //green channel
+      blueData[i] = blueData[i + 1] = 0; //red and green channel
+      blueData[i + 2] = blue; //blue channel
+      blueData[i + 3] = alpha; //alpha channel
 
       //ALPHA Channel
-      const aplha = alphaData[i + 3];
-      alphaData[i] = aplha; //red channel
-      alphaData[i + 1] = aplha; //green channel
-      alphaData[i + 2] = aplha; //blue channel
-      alphaData[i + 3] = 255; //alpha channel
+      alphaData[i] =
+        alphaData[i + 1] =
+        alphaData[i + 2] =
+        alphaData[i + 3] =
+          alpha;
     }
 
     ctx4.putImageData(redChannel, 0, 0);
-    ctx4.putImageData(greenChannel, imgWidth, 0);
-    ctx4.putImageData(blueChannel, 0, imgHeight);
-    ctx4.putImageData(alphaChannel, imgWidth, imgHeight);
+    ctx4.putImageData(greenChannel, 256, 0);
+    ctx4.putImageData(blueChannel, 0, 256);
+    ctx4.putImageData(alphaChannel, 256, 256);
 
     //canvas 5. Barevné kanály CMYK
     const ctx5 = canvas5.getContext("2d");
-    const cmykImage = ctx1.getImageData(0, 0, imgWidth, imgHeight);
-    const cmykData = cmykImage.data;
-    const cChannel = ctx1.getImageData(0, 0, imgWidth, imgHeight);
-    const cData = cChannel.data;
-    const mChannel = ctx1.getImageData(0, 0, imgWidth, imgHeight);
-    const mData = mChannel.data;
-    const yChannel = ctx1.getImageData(0, 0, imgWidth, imgHeight);
-    const yData = yChannel.data;
-    const kChannel = ctx1.getImageData(0, 0, imgWidth, imgHeight);
-    const kData = kChannel.data;
-    for (let i = 0; i < cData.length; i += 4) {
-      const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+    ctx5.drawImage(image, 0, 0, imgWidth / 2, imgHeight / 2);
+
+    var cmykImage = ctx5.getImageData(0, 0, imgWidth / 2, imgHeight / 2);
+    var cmykData = cmykImage.data;
+
+    var cChannel = ctx5.createImageData(imgWidth / 2, imgHeight / 2);
+    var cData = cChannel.data;
+    var mChannel = ctx5.createImageData(imgWidth / 2, imgHeight / 2);
+    var mData = mChannel.data;
+    var yChannel = ctx5.createImageData(imgWidth / 2, imgHeight / 2);
+    var yData = yChannel.data;
+    var kChannel = ctx5.createImageData(imgWidth / 2, imgHeight / 2);
+    var kData = kChannel.data;
+
+    for (let i = 0; i < cmykData.length; i += 4) {
+      const [r, g, b] = [cmykData[i], cmykData[i + 1], cmykData[i + 2]];
       const [c, m, y, k] = rgbToCmyk(r, g, b);
+
       cData[i] = 255 - (c - k) * 255;
-      cData[i + 1] = cData[i + 2] = 255;
+      cData[i + 1] = 255;
+      cData[i + 2] = 255;
+      cData[i + 3] = 255;
 
-      mData[i] = mData[i + 2] = 255;
+      mData[i] = 255;
+      mData[i + 2] = 255;
       mData[i + 1] = 255 - (m - k) * 255;
+      mData[i + 3] = 255;
 
-      yData[i] = yData[i + 1] = 255;
-      yData[i + 2] = 255 - (y - k) * 255;
+      yData[i] = 255;
+      yData[i + 1] = 255;
+      yData[i + 2] = 255 - Math.round((y - k) * 255);
+      yData[i + 3] = 255;
 
       kData[i] = kData[i + 1] = kData[i + 2] = (1 - k) * 255;
+      kData[i + 3] = 255;
     }
     ctx5.putImageData(cChannel, 0, 0);
-    ctx5.putImageData(mChannel, imgWidth, 0);
-    ctx5.putImageData(yChannel, 0, imgHeight);
-    ctx5.putImageData(kChannel, imgWidth, imgHeight);
+    ctx5.putImageData(mChannel, 256, 0);
+    ctx5.putImageData(yChannel, 0, 256);
+    ctx5.putImageData(kChannel, 256, 256);
   };
 
   const rgbToCmyk = (r, g, b) => {
