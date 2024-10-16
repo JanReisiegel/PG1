@@ -82,10 +82,13 @@ function convertImage() {
     resultImageData
   );
 
-  document
-    .getElementById("result")
-    .getContext("2d")
-    .putImageData(resultImageData, 0, 0);
+  const resultCanvas = document.getElementById("result");
+  const resultctx = resultCanvas.getContext("2d");
+
+  resultctx.putImageData(resultImageData, 0, 0);
+
+  resizeAndDrawLogo(resultctx, canvasWidth, canvasHeight);
+
 }
 
 // Function for converting raw data of image
@@ -103,84 +106,76 @@ function convertImageData(
   );
   var personData = personImageData.data;
   var backgroundData = backgroundImageData.data;
-  var logoData = convertToGray(logoImageData).data;
+  var logoData = logoImageData.data;
   var resultData = resultImageData.data;
 
+  keyColor = document.getElementById("keyColor").value;
   // Go through the image using x,y coordinates
-  keyMin = { r: 0, g: 200, b: 0 };
-  keyMax = { r: 20, g: 255, b: 20 };
-  alphaMin = 1 - keyMin.g / 255 - Math.max(keyMin.r / 255, keyMin.b / 255);
-  alphaMax = 1 - keyMax.g / 255 - Math.max(keyMax.r / 255, keyMax.b / 255);
+  key = hexToRgb(keyColor);
+
+  tolerance = document.getElementById("tolerance").value;
+
 
   for (var pixelIndex = 0; pixelIndex < personData.length; pixelIndex += 4) {
     var personR = personData[pixelIndex];
     var personG = personData[pixelIndex + 1];
     var personB = personData[pixelIndex + 2];
     var personA = personData[pixelIndex + 3];
-    var alpha = 1 - personG / 255 - Math.max(personR / 255, personB / 255);
+
 
     if (
-      /*personR >= keyMin.r &&
-      personR <= keyMax.r &&
-      personG >= keyMin.g &&
-      personG <= keyMax.g &&
-      personB >= keyMin.b &&
-      personB <= keyMax.b*/
-      alpha >= alphaMin &&
-      alpha <= alphaMax
+      Math.abs(personG - key.g) < tolerance && Math.abs(personR - key.r) < tolerance && Math.abs(personB - key.b) < tolerance
     ) {
-      const alpha = 1 - personG / 255 - Math.max(personR, personB) / 255;
-      console.log(alpha);
-      resultData[pixelIndex] =
-        personData[pixelIndex] * alpha +
-        backgroundData[pixelIndex] * (1 - alpha);
-      resultData[pixelIndex + 1] =
-        personData[pixelIndex + 1] * alpha +
-        backgroundData[pixelIndex + 1] * (1 - alpha);
-      resultData[pixelIndex + 2] =
-        personData[pixelIndex + 2] * alpha +
-        backgroundData[pixelIndex + 2] * (1 - alpha);
-      resultData[pixelIndex + 3] = personData[pixelIndex + 3];
-    } else if (
-      /*personR < keyMin.r && personG < keyMin.g && personB < keyMin.b*/ alpha <
-      alphaMin
-    ) {
+      personData[pixelIndex + 3] = 0;
+    }
+    if (personData[pixelIndex + 3] == 0) {
       resultData[pixelIndex] = backgroundData[pixelIndex];
       resultData[pixelIndex + 1] = backgroundData[pixelIndex + 1];
       resultData[pixelIndex + 2] = backgroundData[pixelIndex + 2];
       resultData[pixelIndex + 3] = backgroundData[pixelIndex + 3];
-    } else {
+    }
+    else {
       resultData[pixelIndex] = personData[pixelIndex];
       resultData[pixelIndex + 1] = personData[pixelIndex + 1];
       resultData[pixelIndex + 2] = personData[pixelIndex + 2];
       resultData[pixelIndex + 3] = personData[pixelIndex + 3];
     }
 
-    if (logoData[pixelIndex + 3] > 0) {
+
+
+    if (logoData[pixelIndex + 3] != 0) {
       resultData[pixelIndex] = logoData[pixelIndex];
       resultData[pixelIndex + 1] = logoData[pixelIndex + 1];
       resultData[pixelIndex + 2] = logoData[pixelIndex + 2];
       resultData[pixelIndex + 3] = logoData[pixelIndex + 3];
     }
   }
-}
 
-function convertToGray(logoData) {
-  const pixels = logoData.data;
+  function convertToGray(logoData) {
+    const pixels = logoData.data;
 
-  for (let i = 0; i < pixels.length; i += 4) {
-    const r = pixels[i];
-    const g = pixels[i + 1];
-    const b = pixels[i + 2];
-    const a = pixels[i + 3];
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+      const a = pixels[i + 3];
 
-    const avg = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      const avg = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
-    pixels[i] = avg;
-    pixels[i + 1] = avg;
-    pixels[i + 2] = avg;
-    pixels[i + 3] = a;
+      pixels[i] = avg;
+      pixels[i + 1] = avg;
+      pixels[i + 2] = avg;
+      pixels[i + 3] = a;
+    }
+
+    return logoData;
   }
 
-  return logoData;
+  function hexToRgb(hex) {
+    return {
+      r: parseInt(hex.substring(1, 3), 16),
+      g: parseInt(hex.substring(3, 5), 16),
+      b: parseInt(hex.substring(5, 7), 16),
+    };
+  }
 }
