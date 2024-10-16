@@ -88,7 +88,6 @@ function convertImage() {
   resultctx.putImageData(resultImageData, 0, 0);
 
   resizeAndDrawLogo(resultctx, canvasWidth, canvasHeight);
-
 }
 
 // Function for converting raw data of image
@@ -106,7 +105,7 @@ function convertImageData(
   );
   var personData = personImageData.data;
   var backgroundData = backgroundImageData.data;
-  var logoData = logoImageData.data;
+  var logoData = convertToGray(logoImageData).data;
   var resultData = resultImageData.data;
 
   keyColor = document.getElementById("keyColor").value;
@@ -115,16 +114,16 @@ function convertImageData(
 
   tolerance = document.getElementById("tolerance").value;
 
-
   for (var pixelIndex = 0; pixelIndex < personData.length; pixelIndex += 4) {
     var personR = personData[pixelIndex];
     var personG = personData[pixelIndex + 1];
     var personB = personData[pixelIndex + 2];
-    var personA = personData[pixelIndex + 3];
 
-
+    //Klíčování podle předem zvolené barvy a rozsahu (tolerance)
     if (
-      Math.abs(personG - key.g) < tolerance && Math.abs(personR - key.r) < tolerance && Math.abs(personB - key.b) < tolerance
+      Math.abs(personG - key.g) < tolerance &&
+      Math.abs(personR - key.r) < tolerance &&
+      Math.abs(personB - key.b) < tolerance
     ) {
       personData[pixelIndex + 3] = 0;
     }
@@ -133,16 +132,14 @@ function convertImageData(
       resultData[pixelIndex + 1] = backgroundData[pixelIndex + 1];
       resultData[pixelIndex + 2] = backgroundData[pixelIndex + 2];
       resultData[pixelIndex + 3] = backgroundData[pixelIndex + 3];
-    }
-    else {
+    } else {
       resultData[pixelIndex] = personData[pixelIndex];
       resultData[pixelIndex + 1] = personData[pixelIndex + 1];
       resultData[pixelIndex + 2] = personData[pixelIndex + 2];
       resultData[pixelIndex + 3] = personData[pixelIndex + 3];
     }
 
-
-
+    //Přidání loga
     if (logoData[pixelIndex + 3] != 0) {
       resultData[pixelIndex] = logoData[pixelIndex];
       resultData[pixelIndex + 1] = logoData[pixelIndex + 1];
@@ -151,6 +148,7 @@ function convertImageData(
     }
   }
 
+  //Funkce pro převod loga do šedotónové podoby
   function convertToGray(logoData) {
     const pixels = logoData.data;
 
@@ -171,6 +169,7 @@ function convertImageData(
     return logoData;
   }
 
+  //Funkce pro převod barvy z hexadecimálního formátu na RGB
   function hexToRgb(hex) {
     return {
       r: parseInt(hex.substring(1, 3), 16),
