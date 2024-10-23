@@ -31,7 +31,7 @@
       onchange="handleFileSelect(this)"
       name="files[]"
     />
-    <input type="number" id="k_parametr" value="1" min="0" max="255" />
+    <input type="number" id="k_parametr" value="16" min="0" max="255" />
     <label for="matrixSelect">Vyberte matici:</label>
     <select id="matrixSelect" onchange="selectMatrix(this)">
       <option value="1">Floyd-Steinberg 4×4</option>
@@ -42,13 +42,16 @@
     <input
       type="number"
       id="matrixSize"
-      value="4"
+      value="8"
       min="1"
       max="255"
       disabled="true"
     />
     <button type="button" id="convert" disabled>Convert</button>
-    <div id="compares" style="display: flex; flex-direction: row; flex-wrap: wrap;"></div>
+    <div
+      id="compares"
+      style="display: flex; flex-direction: row; flex-wrap: wrap"
+    ></div>
   </body>
 
   <script type="text/javascript" src="./script.js"></script>

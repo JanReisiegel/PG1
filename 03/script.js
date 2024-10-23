@@ -64,7 +64,6 @@ function convertImage() {
   srcImageData = convertToGrayScale(srcImageData);
 
   convertImageData(srcImageData);
-
   srcContext.putImageData(srcImageData, 0, 0);
 }
 
@@ -81,6 +80,7 @@ const printer = [
   [4, 15, 14, 10],
   [0, 11, 7, 3],
 ]; //matice pro tiskázny z přednášky
+var Mnxn; //matice pro tiskázny z přednášky
 
 // Function for converting raw data of image
 function convertImageData(imgData) {
@@ -91,63 +91,31 @@ function convertImageData(imgData) {
   // Go through the image using x,y coordinates
   var pixelIndex;
   // Vytvoření matice pro display n×n
-  var n = document.getElementById("matrixSize").value;
-  let Mnxn = M2(n);
+  var n = Number(document.getElementById("matrixSize").value);
+
+  Mnxn = M(n);
 
   var selectedMatrix = [];
   var select = document.getElementById("matrixSelect");
-  console.log(select.value);
+
+  var k = Number(document.getElementById("k_parametr").value);
+  var n = Number(document.getElementById("matrixSize").value);
+  // Vytvoření compares
+  compares(imgData);
   switch (select.value) {
-    case 1:
-      selectedMatrix = floydSteinbergMatrix;
+    case "1":
+      floydSteinbergMethod(imgData);
       break;
-    case 2:
-      selectedMatrix = printer;
+    case "2":
+      matrixMethod(imgData, printer, 4, k);
       break;
-    case 3:
-      selectedMatrix = Mnxn;
+    case "3":
+      console.log(Mnxn, n, k);
+      matrixMethod(imgData, Mnxn, n, k);
       break;
     default:
-      selectedMatrix = floydSteinbergMatrix;
+      floydSteinbergMethod(imgData);
       break;
-  }
-
-  matrices = [floydSteinbergMatrix, printer, Mnxn];
-
-  // Vytvoření compares
-  compares(imgData, matrices);
-
-  var n = selectedMatrix.length;
-  var k = document.getElementById("k_parametr").value;
-  var min = 0;
-  var max = 255;
-
-  for (var y = 0; y < imgData.height; y++) {
-    for (var x = 0; x < imgData.width; x++) {
-      pixelIndex = (imgData.width * y + x) * 4;
-
-      let r = rawData[pixelIndex]; // Red
-      let g = rawData[pixelIndex + 1]; // Green
-      let b = rawData[pixelIndex + 2]; // Blue
-      let a = rawData[pixelIndex + 3]; // Alpha
-
-      let matrixValue = selectedMatrix[x % n][y % n];
-
-      // Porovnání s maticí a použití ditheringu
-      if (r > k * matrixValue) {
-        // Pokud je pixel větší než matice, nastavíme na bílou
-        rawData[pixelIndex] =
-          rawData[pixelIndex + 1] =
-          rawData[pixelIndex + 2] =
-            max;
-      } else {
-        // Jinak černá
-        rawData[pixelIndex] =
-          rawData[pixelIndex + 1] =
-          rawData[pixelIndex + 2] =
-            min;
-      }
-    }
   }
 }
 
@@ -189,10 +157,18 @@ function J(n) {
 
 function M(n) {
   if (n === 1) {
-    return [[1]];
-  }
+    return [[0]];
+  } else {
+    let Mn = M(n / 2);
+    let Jn = J(n / 2);
 
-  return M(n / 2);
+    let topLeft = multiplyMatrix(Mn, 4);
+    let topRight = addMatrices(multiplyMatrix(Mn, 4), multiplyMatrix(Jn, 3));
+    let bottomLeft = addMatrices(multiplyMatrix(Mn, 4), multiplyMatrix(Jn, 2));
+    let bottomRight = addMatrices(multiplyMatrix(Mn, 4), Jn);
+
+    return mergeMatrices(topLeft, topRight, bottomLeft, bottomRight);
+  }
 }
 
 function multiplyMatrix(matrix, scalar) {
@@ -205,75 +181,159 @@ function addMatrices(matrix1, matrix2) {
   );
 }
 
-function M2(n) {
-  let Mn = M(n);
-  let Jn = J(n);
+function mergeMatrices(topLeft, topRight, bottomLeft, bottomRight) {
+  let n = topLeft.length;
+  let result = [];
 
-  return [
-    [
-      multiplyMatrix(Mn, 4),
-      addMatrices(multiplyMatrix(Mn, 4), multiplyMatrix(Jn, 3)),
-    ],
-    [
-      addMatrices(multiplyMatrix(Mn, 4), multiplyMatrix(Jn, 2)),
-      addMatrices(multiplyMatrix(Mn, 4), Jn),
-    ],
-  ];
+  for (let i = 0; i < n; i++) {
+    result.push([...topLeft[i], ...topRight[i]]);
+  }
+  for (let i = 0; i < n; i++) {
+    result.push([...bottomLeft[i], ...bottomRight[i]]);
+  }
+
+  return result;
 }
 
-function compares(imgData, matrices) {
-  console.log(matrices);
+function compares(imgData) {
+  var rawData = imgData.data;
+  var k = Number(document.getElementById("k_parametr").value);
+  var n = Number(document.getElementById("matrixSize").value);
+
   const outputDiv = document.getElementById("compares");
-  var k = document.getElementById("k_parametr").value;
-  for (let i = 0; i < matrices.length; i++) {
-    const canvasDiv = document.createElement("div");
-    canvasDiv.id = "canvasDiv" + i;
-    const canvas = document.createElement("canvas");
-    canvas.width = imgData.width;
-    canvas.height = imgData.height;
-    canvasDiv.style.alignItems = "center";
-    canvasDiv.style.margin = "10px";
-    canvasDiv.appendChild(canvas);
-    const ctx = canvas.getContext("2d");
 
-    var rawData = imgData.data;
-    var result = imgData;
-    var resultData = result.data;
+  var divFloyd = document.createElement("div");
+  divFloyd.style.margin = "10px";
+  var floydHeader = document.createElement("h3");
+  floydHeader.textContent = "Floyd-Steinberg";
+  divFloyd.appendChild(floydHeader);
+  var divPrinter = document.createElement("div");
+  divPrinter.style.margin = "10px";
+  var printerHeader = document.createElement("h3");
+  printerHeader.textContent = "Printer";
+  divPrinter.appendChild(printerHeader);
+  var divMnxn = document.createElement("div");
+  divMnxn.style.margin = "10px";
+  var MnxnHeader = document.createElement("h3");
+  MnxnHeader.textContent = `M${n}x${n}`;
+  divMnxn.appendChild(MnxnHeader);
+  var canvasFloyd = document.createElement("canvas");
+  canvasFloyd.width = imgData.width;
+  canvasFloyd.height = imgData.height;
+  var canvasPrinter = document.createElement("canvas");
+  canvasPrinter.width = imgData.width;
+  canvasPrinter.height = imgData.height;
+  var canvasMnxn = document.createElement("canvas");
+  canvasMnxn.width = imgData.width;
+  canvasMnxn.height = imgData.height;
+  var ctxFloyd = canvasFloyd.getContext("2d");
+  var ctxPrinter = canvasPrinter.getContext("2d");
+  var ctxMnxn = canvasMnxn.getContext("2d");
+  ctxFloyd.putImageData(imgData, 0, 0);
+  ctxPrinter.putImageData(imgData, 0, 0);
+  ctxMnxn.putImageData(imgData, 0, 0);
 
-    var n = matrices[i].length;
-    var min = 0;
-    var max = 255;
+  var floydData = ctxFloyd.getImageData(0, 0, imgData.width, imgData.height);
+  floydSteinbergMethod(floydData);
+  var printerData = ctxPrinter.getImageData(
+    0,
+    0,
+    imgData.width,
+    imgData.height
+  );
+  matrixMethod(printerData, printer, 4, k);
+  var MnxnData = ctxMnxn.getImageData(0, 0, imgData.width, imgData.height);
+  matrixMethod(MnxnData, Mnxn, n, k);
 
-    for (var y = 0; y < imgData.height; y++) {
-      for (var x = 0; x < imgData.width; x++) {
-        pixelIndex = (imgData.width * y + x) * 4;
+  var min = 0;
+  var max = 255;
 
-        let r = rawData[pixelIndex]; // Red
-        let g = rawData[pixelIndex + 1]; // Green
-        let b = rawData[pixelIndex + 2]; // Blue
-        let a = rawData[pixelIndex + 3]; // Alpha
+  /*for (var y = 0; y < imgData.height; y++) {
+    for (var x = 0; x < imgData.width; x++) {
+      pixelIndex = (imgData.width * y + x) * 4;
 
-        let matrixValue = matrices[i][x % n][y % n];
+      let r = rawData[pixelIndex]; // Red
+      let g = rawData[pixelIndex + 1]; // Green
+      let b = rawData[pixelIndex + 2]; // Blue
+      let a = rawData[pixelIndex + 3]; // Alpha
 
-        // Porovnání s maticí a použití ditheringu
-        if (r > k * matrixValue) {
-          // Pokud je pixel větší než matice, nastavíme na bílou
-          resultData[pixelIndex] =
-            resultData[pixelIndex + 1] =
-            resultData[pixelIndex + 2] =
-              max;
-        } else {
-          // Jinak černá
-          resultData[pixelIndex] =
-            resultData[pixelIndex + 1] =
-            resultData[pixelIndex + 2] =
-              min;
-        }
+      console.log(x, y, n, typeof n, typeof x, typeof y);
+      let MnxnKeyData = Mnxn[x % n][y % n];
+      let printerKeyData = printer[x % 4][y % 4];
+
+      // Porovnání s maticí a použití ditheringu
+      if (r > k * printerKeyData) {
+        // Pokud je pixel větší než matice, nastavíme na bílou
+        printerData.data[pixelIndex] =
+          printerData.data[pixelIndex + 1] =
+          printerData.data[pixelIndex + 2] =
+            max;
+      } else {
+        // Jinak černá
+        printerData.data[pixelIndex] =
+          printerData.data[pixelIndex + 1] =
+          printerData.data[pixelIndex + 2] =
+            min;
       }
     }
+  }*/
 
-    ctx.putImageData(result, 0, 0);
-    displayMatrixAsTable(matrices[i], canvasDiv);
-    outputDiv.appendChild(canvasDiv);
+  ctxFloyd.putImageData(floydData, 0, 0);
+  ctxPrinter.putImageData(printerData, 0, 0);
+  ctxMnxn.putImageData(MnxnData, 0, 0);
+
+  divFloyd.appendChild(canvasFloyd);
+  divPrinter.appendChild(canvasPrinter);
+  divMnxn.appendChild(canvasMnxn);
+
+  displayMatrixAsTable(floydSteinbergMatrix, divFloyd);
+  displayMatrixAsTable(printer, divPrinter);
+  displayMatrixAsTable(Mnxn, divMnxn);
+
+  outputDiv.appendChild(divFloyd);
+  outputDiv.appendChild(divPrinter);
+  outputDiv.appendChild(divMnxn);
+}
+
+function floydSteinbergMethod(imageData) {
+  const data = imageData.data;
+  const width = imageData.width;
+
+  for (let y = 0; y < imageData.height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const oldPixel = data[i];
+      const newPixel = oldPixel < 128 ? 0 : 255;
+      const quantError = oldPixel - newPixel;
+
+      // Nastavení nového pixelu na černou nebo bílou
+      data[i] = data[i + 1] = data[i + 2] = newPixel;
+
+      // Aplikace rozptylu chyb na okolní pixely
+      if (x + 1 < width) data[i + 4] += (quantError * 7) / 16;
+      if (x > 0 && y + 1 < imageData.height)
+        data[i + 4 * width - 4] += (quantError * 3) / 16;
+      if (y + 1 < imageData.height)
+        data[i + 4 * width] += (quantError * 5) / 16;
+      if (x + 1 < width && y + 1 < imageData.height)
+        data[i + 4 * width + 4] += (quantError * 1) / 16;
+    }
+  }
+}
+
+function matrixMethod(imageData, matrix, n, k) {
+  const data = imageData.data;
+  const width = imageData.width;
+
+  for (let y = 0; y < imageData.height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const oldPixel = data[i];
+      var keyData = k * matrix[x % n][y % n];
+      const newPixel = oldPixel < keyData ? 0 : 255;
+
+      // Nastavení nového pixelu na černou nebo bílou
+      data[i] = data[i + 1] = data[i + 2] = newPixel;
+    }
   }
 }
