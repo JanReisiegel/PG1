@@ -45,6 +45,14 @@ function handleFileSelect(item) {
   }
 }
 
+const matrixSelect = [];
+function selectMatrix(item) {
+  if (item.value === "3") {
+    var input = document.getElementById("matrixSize");
+    input.disabled = false;
+  }
+}
+
 // Callback function called, when clicked at Convert button
 function convertImage() {
   var srcCanvas = document.getElementById("src");
@@ -60,32 +68,59 @@ function convertImage() {
   srcContext.putImageData(srcImageData, 0, 0);
 }
 
+// Matice Floyd-Steinberg
+const floydSteinbergMatrix = [
+  [0, 128, 32, 160],
+  [192, 64, 224, 96],
+  [48, 176, 16, 144],
+  [240, 112, 208, 80],
+];
+const printer = [
+  [1, 5, 9, 2],
+  [8, 12, 13, 6],
+  [4, 15, 14, 10],
+  [0, 11, 7, 3],
+]; //matice pro tiskázny z přednášky
+
 // Function for converting raw data of image
 function convertImageData(imgData) {
-  //let testMatrix = getMatrixFromTable();
-  //console.log(testMatrix);
   let width = imgData.width;
   let height = imgData.height;
   var rawData = imgData.data;
-  var M = [
-    [0, 12, 3, 15],
-    [8, 4, 11, 7],
-    [2, 14, 1, 13],
-    [10, 6, 9, 5],
-  ]; //matice pro monitory z přednášky
-  var N = [
-    [1, 5, 9, 2],
-    [8, 12, 13, 6],
-    [4, 15, 14, 10],
-    [0, 11, 7, 3],
-  ]; //matice pro tiskázny z přednášky
+
+  // Go through the image using x,y coordinates
+  var pixelIndex;
+  // Vytvoření matice pro display n×n
+  var n = document.getElementById("matrixSize").value;
+  let Mnxn = M2(n);
+
+  var selectedMatrix = [];
+  var select = document.getElementById("matrixSelect");
+  console.log(select.value);
+  switch (select.value) {
+    case 1:
+      selectedMatrix = floydSteinbergMatrix;
+      break;
+    case 2:
+      selectedMatrix = printer;
+      break;
+    case 3:
+      selectedMatrix = Mnxn;
+      break;
+    default:
+      selectedMatrix = floydSteinbergMatrix;
+      break;
+  }
+
+  matrices = [floydSteinbergMatrix, printer, Mnxn];
+
+  // Vytvoření compares
+  compares(imgData, matrices);
+
+  var n = selectedMatrix.length;
   var k = document.getElementById("k_parametr").value;
   var min = 0;
   var max = 255;
-  var n = 4;
-
-  // Go through the image using x,y coordinates
-  var pixelIndex, red, green, blue, alpha;
 
   for (var y = 0; y < imgData.height; y++) {
     for (var x = 0; x < imgData.width; x++) {
@@ -96,7 +131,7 @@ function convertImageData(imgData) {
       let b = rawData[pixelIndex + 2]; // Blue
       let a = rawData[pixelIndex + 3]; // Alpha
 
-      let matrixValue = N[x % n][y % n];
+      let matrixValue = selectedMatrix[x % n][y % n];
 
       // Porovnání s maticí a použití ditheringu
       if (r > k * matrixValue) {
@@ -112,22 +147,6 @@ function convertImageData(imgData) {
           rawData[pixelIndex + 2] =
             min;
       }
-
-      /*let grayscale = rawData[pixelIndex];
-
-			let newColor = grayscale < 128 ? 0 : 255;
-
-			// Chyba zaokrouhlení
-			let error = grayscale - newColor;
-
-			// Nastavíme nový černobílý pixel
-			rawData[pixelIndex] = rawData[pixelIndex + 1] = rawData[pixelIndex + 2] = newColor;
-
-			// Rozptyl chyby podle matice (přesahujeme okraje obrázku, tak se musíme omezit)
-			if (x + 1 < width) rawData[(y * width + (x + 1)) * 4] += (7 / 16) * error;
-			if (x - 1 >= 0 && y + 1 < height) rawData[((y + 1) * width + (x - 1)) * 4] += (3 / 16) * error;
-			if (y + 1 < height) rawData[((y + 1) * width + x) * 4] += (5 / 16) * error;
-			if (x + 1 < width && y + 1 < height) rawData[((y + 1) * width + (x + 1)) * 4] += (1 / 16) * error;*/
     }
   }
 }
@@ -146,51 +165,7 @@ function convertToGrayScale(imgData) {
   return imgData;
 }
 
-function generateMatrixInputs() {
-  const rows = document.getElementById("rows").value;
-  const cols = document.getElementById("cols").value;
-  const form = document.getElementById("matrix-form");
-  form.innerHTML = ""; // Vyprázdní formulář
-
-  // Generování textových polí pro každou hodnotu matice
-  for (let i = 0; i < rows; i++) {
-    for (let j = 0; j < cols; j++) {
-      const input = document.createElement("input");
-      input.type = "number";
-      input.className = "matrix-input";
-      input.name = `cell-${i}-${j}`;
-      input.min = 0;
-      form.appendChild(input);
-    }
-    form.appendChild(document.createElement("br"));
-  }
-}
-
-function submitMatrix() {
-  const rows = document.getElementById("rows").value;
-  const cols = document.getElementById("cols").value;
-  const matrix = [];
-
-  // Iterace přes zadané hodnoty a vytvoření matice
-  for (let i = 0; i < rows; i++) {
-    const row = [];
-    for (let j = 0; j < cols; j++) {
-      const value = document.querySelector(
-        `input[name="cell-${i}-${j}"]`
-      ).value;
-      row.push(parseInt(value, 10)); // Převod hodnoty na celé číslo
-    }
-    matrix.push(row);
-  }
-
-  // Zobrazení výsledné matice
-  //document.getElementById('output_M').textContent = JSON.stringify(matrix, null, 2);
-  //document.getElementById('output_M').style.visibility = 'none';
-  displayMatrixAsTable(matrix);
-}
-
-function displayMatrixAsTable(matrix) {
-  const outputDiv = document.getElementById("output");
+function displayMatrixAsTable(matrix, outputDiv) {
   const table = document.createElement("table");
   table.className = "matrix-table";
 
@@ -204,26 +179,101 @@ function displayMatrixAsTable(matrix) {
     table.appendChild(tr);
   });
 
-  // Vyprázdnění předchozího obsahu a přidání nové tabulky
-  outputDiv.innerHTML = "";
+  // přidání nové tabulky
   outputDiv.appendChild(table);
 }
 
-function getMatrixFromTable() {
-  const table = document.querySelector(".matrix-table");
-  const matrix = [];
+function J(n) {
+  return Array.from({ length: n }, () => Array(n).fill(1));
+}
 
-  // Iterace přes řádky tabulky
-  table.querySelectorAll("tr").forEach((row) => {
-    const rowData = [];
-    // Iterace přes buňky v každém řádku
-    row.querySelectorAll("td").forEach((cell) => {
-      rowData.push(parseInt(cell.textContent, 10)); // Převod na celé číslo
-    });
-    matrix.push(rowData);
-  });
+function M(n) {
+  if (n === 1) {
+    return [[1]];
+  }
 
-  return matrix;
-  // Zobrazení získané matice ve formátu JSON
-  //document.getElementById('retrieved-matrix').textContent = JSON.stringify(matrix, null, 2);
+  return M(n / 2);
+}
+
+function multiplyMatrix(matrix, scalar) {
+  return matrix.map((row) => row.map((cell) => cell * scalar));
+}
+
+function addMatrices(matrix1, matrix2) {
+  return matrix1.map((row, rowIndex) =>
+    row.map((cell, cellIndex) => cell + matrix2[rowIndex][cellIndex])
+  );
+}
+
+function M2(n) {
+  let Mn = M(n);
+  let Jn = J(n);
+
+  return [
+    [
+      multiplyMatrix(Mn, 4),
+      addMatrices(multiplyMatrix(Mn, 4), multiplyMatrix(Jn, 3)),
+    ],
+    [
+      addMatrices(multiplyMatrix(Mn, 4), multiplyMatrix(Jn, 2)),
+      addMatrices(multiplyMatrix(Mn, 4), Jn),
+    ],
+  ];
+}
+
+function compares(imgData, matrices) {
+  console.log(matrices);
+  const outputDiv = document.getElementById("compares");
+  var k = document.getElementById("k_parametr").value;
+  for (let i = 0; i < matrices.length; i++) {
+    const canvasDiv = document.createElement("div");
+    canvasDiv.id = "canvasDiv" + i;
+    const canvas = document.createElement("canvas");
+    canvas.width = imgData.width;
+    canvas.height = imgData.height;
+    canvasDiv.style.alignItems = "center";
+    canvasDiv.style.margin = "10px";
+    canvasDiv.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+
+    var rawData = imgData.data;
+    var result = imgData;
+    var resultData = result.data;
+
+    var n = matrices[i].length;
+    var min = 0;
+    var max = 255;
+
+    for (var y = 0; y < imgData.height; y++) {
+      for (var x = 0; x < imgData.width; x++) {
+        pixelIndex = (imgData.width * y + x) * 4;
+
+        let r = rawData[pixelIndex]; // Red
+        let g = rawData[pixelIndex + 1]; // Green
+        let b = rawData[pixelIndex + 2]; // Blue
+        let a = rawData[pixelIndex + 3]; // Alpha
+
+        let matrixValue = matrices[i][x % n][y % n];
+
+        // Porovnání s maticí a použití ditheringu
+        if (r > k * matrixValue) {
+          // Pokud je pixel větší než matice, nastavíme na bílou
+          resultData[pixelIndex] =
+            resultData[pixelIndex + 1] =
+            resultData[pixelIndex + 2] =
+              max;
+        } else {
+          // Jinak černá
+          resultData[pixelIndex] =
+            resultData[pixelIndex + 1] =
+            resultData[pixelIndex + 2] =
+              min;
+        }
+      }
+    }
+
+    ctx.putImageData(result, 0, 0);
+    displayMatrixAsTable(matrices[i], canvasDiv);
+    outputDiv.appendChild(canvasDiv);
+  }
 }
