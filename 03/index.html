@@ -1,58 +1,45 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>RGB to Bitmap</title>
-    <style>
-      .matrix-input {
-        margin: 5px;
-        width: 50px;
-      }
 
-      .matrix-table {
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>RGB to Bitmap</title>
+  <style>
+    .matrix-input {
+      margin: 5px;
+      width: 50px;
+    }
 
-      .matrix-table td {
-        border: 1px solid black;
-        padding: 2px;
-        text-align: center;
-      }
-    </style>
-  </head>
+    .matrix-table {
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-  <body>
-    <canvas id="src" width="256" height="256"></canvas>
-    <br />
-    <input
-      type="file"
-      id="file"
-      onchange="handleFileSelect(this)"
-      name="files[]"
-    />
-    <input type="number" id="k_parametr" value="16" min="0" max="255" />
-    <label for="matrixSelect">Vyberte matici:</label>
-    <select id="matrixSelect" onchange="selectMatrix(this)">
-      <option value="1">Floyd-Steinberg 4×4</option>
-      <option value="2">Pro tiskárnu 4×4</option>
-      <option value="3">Matice n×n pro displeje</option>
-      <!-- Další matice mohou být přidány zde -->
-    </select>
-    <input
-      type="number"
-      id="matrixSize"
-      value="8"
-      min="1"
-      max="255"
-      disabled="true"
-    />
-    <button type="button" id="convert" disabled>Convert</button>
-    <div
-      id="compares"
-      style="display: flex; flex-direction: row; flex-wrap: wrap"
-    ></div>
-  </body>
+    .matrix-table td {
+      border: 1px solid black;
+      padding: 2px;
+      text-align: center;
+    }
+  </style>
+</head>
 
-  <script type="text/javascript" src="./script.js"></script>
+<body>
+  <canvas id="src" width="256" height="256"></canvas>
+  <br />
+  <input type="file" id="file" onchange="handleFileSelect(this)" name="files[]" />
+  <input type="number" id="k_parametr" value="1" min="0" max="255" />
+  <label for="matrixSelect">Vyberte matici:</label>
+  <select id="matrixSelect" onchange="selectMatrix(this)">
+    <option value="1">Floyd-Steinberg 4×4</option>
+    <option value="2">Pro tiskárnu 4×4</option>
+    <option value="3">Matice n×n pro displeje</option>
+    <!-- Další matice mohou být přidány zde -->
+  </select>
+  <input type="number" id="matrixSize" value="8" min="1" max="255" disabled="true" />
+  <button type="button" id="convert" disabled>Convert</button>
+  <div id="compares" style="display: flex; flex-direction: row; flex-wrap: wrap"></div>
+</body>
+
+<script type="text/javascript" src="./script.js"></script>
+
 </html>
