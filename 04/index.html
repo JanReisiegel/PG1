@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<meta charset="UTF-8"/>
-	<title>RGB to Bitmap</title>
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <title>RGB to Bitmap</title>
+  </head>
 
-<body>
-	<canvas id="src" width="256" height="256"></canvas>
-	<canvas id="histogram" width="256" height="256"></canvas>
-	<br/>
-	<input type="file" id="file" onchange="handleFileSelect(this)" name="files[]"/>
-</body>
+  <body>
+    <canvas id="src" width="256" height="256"></canvas>
+    <canvas id="histogram" width="256" height="256"></canvas>
+    <br />
+    <input
+      type="file"
+      id="file"
+      onchange="handleFileSelect(this)"
+      name="files[]"
+    />
+    <select id="histSelect" onchange="onSelect(this)">
+      <option value="1">Histogram for Red</option>
+      <option value="2">Histogram for Green</option>
+      <option value="3">Histogram for Blue</option>
+      <option value="4">Histogram for BT.601</option>
+      <option value="5">Histogram for all</option>
+      <!-- Další matice mohou být přidány zde -->
+    </select>
+  </body>
 
-<script type="text/javascript" src="./script.js"></script>
-
+  <script type="text/javascript" src="./script.js"></script>
 </html>
