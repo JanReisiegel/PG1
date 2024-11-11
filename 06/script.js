@@ -1,43 +1,52 @@
+var urlParams = new URLSearchParams(window.location.search);
+
 window.onload = function () {
-	renderGlobe();
-}
+  changeProperties();
+  renderGlobe();
+};
 
 function renderGlobe() {
-	var gl = document.getElementById("webgl_canvas").getContext("experimental-webgl");
+  // Get WebGL context
+  var gl = document
+    .getElementById("webgl_canvas")
+    .getContext("experimental-webgl");
 
-	// Create vertex shader
-	var vertexShaderCode = document.querySelector("#vs").textContent;
-	var vertexShader = gl.createShader(gl.VERTEX_SHADER);
-	gl.shaderSource(vertexShader, vertexShaderCode);
-	gl.compileShader(vertexShader);
+  // Create vertex shader
+  var vertexShaderCode = document.querySelector("#vs").textContent;
+  var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vertexShader, vertexShaderCode);
+  gl.compileShader(vertexShader);
 
-	// Create fragment shader
-	var fragmentShaderCode = document.querySelector("#fs").textContent;
-	var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-	gl.shaderSource(fragmentShader, fragmentShaderCode);
-	gl.compileShader(fragmentShader);
+  // Create fragment shader
+  var fragmentShaderCode = document.querySelector("#fs").textContent;
+  var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fragmentShader, fragmentShaderCode);
+  gl.compileShader(fragmentShader);
 
-	// Create program
-	var program = gl.createProgram();
-	gl.attachShader(program, vertexShader);
-	gl.attachShader(program, fragmentShader);
-	gl.linkProgram(program);
-	gl.useProgram(program);
+  // Create program
+  var program = gl.createProgram();
+  gl.attachShader(program, vertexShader);
+  gl.attachShader(program, fragmentShader);
+  gl.linkProgram(program);
+  gl.useProgram(program);
 
-	// Create buffer for positions of vertices
-	var posLoc = gl.getAttribLocation(program, "pos");
-	gl.enableVertexAttribArray(posLoc);
-	// Create buffer for position of vertices
-	var posBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-	// We need many vertices, because each vertex need
-	// own value of normal and UV
+  // Create buffer for positions of vertices
+  var posLoc = gl.getAttribLocation(program, "pos");
+  gl.enableVertexAttribArray(posLoc);
+  // Create buffer for position of vertices
+  var posBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+  // We need many vertices, because each vertex need
+  // own value of normal and UV
 
-	var longitudeBands = document.getElementById("longitude").value;
-	var latitudeBands = document.getElementById("latitude").value;
+  var longitudeBands = document.getElementById("longitude").value;
+  var latitudeBands = document.getElementById("latitude").value;
 
-	var { vertices, normals, uvs, indices } = generateSphere(Number(latitudeBands), Number(longitudeBands));
-	/* var vertices = [
+  var { vertices, normals, uvs, indices } = generateSphere(
+    Number(latitudeBands),
+    Number(longitudeBands)
+  );
+  /* var vertices = [
 		// Bottom face
 		-1.0, -1.0, -1.0,	// 0
 		1.0, -1.0, -1.0,	// 1
@@ -69,15 +78,15 @@ function renderGlobe() {
 		1.0, 1.0, 1.0,	// 22
 		-1.0, 1.0, 1.0	// 23
 	]; */
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-	gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
 
-	// Create buffer for UV coordinates
-	var uvLoc = gl.getAttribLocation(program, "uv");
-	gl.enableVertexAttribArray(uvLoc);
-	var uvBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
-	/* uvs = [
+  // Create buffer for UV coordinates
+  var uvLoc = gl.getAttribLocation(program, "uv");
+  gl.enableVertexAttribArray(uvLoc);
+  var uvBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+  /* uvs = [
 		// Bottom face
 		0.0, 0.0,
 		1.0, 0.0,
@@ -109,15 +118,15 @@ function renderGlobe() {
 		1.0, 1.0,
 		0.0, 1.0
 	]; */
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
-	gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(uvLoc, 2, gl.FLOAT, false, 0, 0);
 
-	// Create buffer for vertex normals
-	var normalLoc = gl.getAttribLocation(program, "normal");
-	gl.enableVertexAttribArray(normalLoc);
-	var normalBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-	/* normals = [
+  // Create buffer for vertex normals
+  var normalLoc = gl.getAttribLocation(program, "normal");
+  gl.enableVertexAttribArray(normalLoc);
+  var normalBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+  /* normals = [
 		// Bottom face
 		0.0, 0.0, -1.0,
 		0.0, 0.0, -1.0,
@@ -149,13 +158,13 @@ function renderGlobe() {
 		0.0, 0.0, 1.0,
 		0.0, 0.0, 1.0
 	]; */
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-	gl.vertexAttribPointer(normalLoc, 3, gl.FLOAT, true, 0, 0);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(normalLoc, 3, gl.FLOAT, true, 0, 0);
 
-	// Create index buffer
-	var indexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-	/* var indices = [
+  // Create index buffer
+  var indexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  /* var indices = [
 		0, 1, 2,	// 0
 		0, 2, 3,
 		4, 5, 6,	// 1
@@ -169,125 +178,160 @@ function renderGlobe() {
 		20, 21, 22,	// 5
 		20, 22, 23
 	]; */
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW); //uint16array místo uint8array
+  gl.bufferData(
+    gl.ELEMENT_ARRAY_BUFFER,
+    new Uint16Array(indices),
+    gl.STATIC_DRAW
+  ); //uint16array místo uint8array
 
-	// Create and load image used as texture
-	var image = new Image();
-	image.src = "./globe_texture.jpg";
-	image.onload = function () {
-		var texture = gl.createTexture();
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-		gl.generateMipmap(gl.TEXTURE_2D);
+  // Create and load image used as texture
+  var image = new Image();
+  image.src = "./globe_texture.jpg";
+  image.onload = function () {
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_MIN_FILTER,
+      gl.LINEAR_MIPMAP_LINEAR
+    );
+    gl.generateMipmap(gl.TEXTURE_2D);
 
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		var samplerLoc = gl.getUniformLocation(program, "sampler");
-		gl.uniform1i(samplerLoc, 0); // nula odpovídá gl.TEXTURE0
-	};
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    var samplerLoc = gl.getUniformLocation(program, "sampler");
+    gl.uniform1i(samplerLoc, 0); // nula odpovídá gl.TEXTURE0
+  };
 
-	// Create matrix for model
-	var modelMatrix = mat4.create();
-	mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(0.8, 0.8, 0.8));
-	var modelLocation = gl.getUniformLocation(program, "modelMatrix");
-	gl.uniformMatrix4fv(modelLocation, false, modelMatrix);
+  // Create matrix for model
+  var modelMatrix = mat4.create();
+  mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(0.8, 0.8, 0.8));
+  var modelLocation = gl.getUniformLocation(program, "modelMatrix");
+  gl.uniformMatrix4fv(modelLocation, false, modelMatrix);
 
-	// Create matrix for view
-	var viewMatrix = mat4.create();
-	mat4.translate(viewMatrix, viewMatrix, vec3.fromValues(0, 0, -5));
-	var viewLocation = gl.getUniformLocation(program, "viewMatrix");
-	gl.uniformMatrix4fv(viewLocation, false, viewMatrix);
+  // Create matrix for view
+  var viewMatrix = mat4.create();
+  mat4.translate(viewMatrix, viewMatrix, vec3.fromValues(0, 0, -2));
+  var viewLocation = gl.getUniformLocation(program, "viewMatrix");
+  gl.uniformMatrix4fv(viewLocation, false, viewMatrix);
 
-	// Create matrix for projection
-	var projMatrix = mat4.create();
-	mat4.perspective(projMatrix, Math.PI / 3, 1, 0.1, 100);
-	var projLocation = gl.getUniformLocation(program, "projMatrix");
-	gl.uniformMatrix4fv(projLocation, false, projMatrix);
+  // Create matrix for projection
+  var projMatrix = mat4.create();
+  mat4.perspective(projMatrix, Math.PI / 3, 1, 0.1, 100);
+  var projLocation = gl.getUniformLocation(program, "projMatrix");
+  gl.uniformMatrix4fv(projLocation, false, projMatrix);
 
-	// Create matrix for transformation of normal vectors
-	var normalMatrix = mat3.create();
-	var normalLocation = gl.getUniformLocation(program, "normalMatrix");
-	mat3.normalFromMat4(normalMatrix, modelMatrix);
-	gl.uniformMatrix3fv(normalLocation, false, normalMatrix);
+  // Create matrix for transformation of normal vectors
+  var normalMatrix = mat3.create();
+  var normalLocation = gl.getUniformLocation(program, "normalMatrix");
+  mat3.normalFromMat4(normalMatrix, modelMatrix);
+  gl.uniformMatrix3fv(normalLocation, false, normalMatrix);
 
-	// Enable depth test
-	gl.enable(gl.DEPTH_TEST);
+  // Enable depth test
+  gl.enable(gl.DEPTH_TEST);
 
-	// Create polyfill to make it working in the most modern browsers
-	window.requestAnimationFrame = window.requestAnimationFrame
-		|| window.mozRequestAnimationFrame
-		|| window.webkitRequestAnimationFrame
-		|| function (cb) { setTimeout(cb, 1000 / 60); };
+  // Create polyfill to make it working in the most modern browsers
+  window.requestAnimationFrame =
+    window.requestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    function (cb) {
+      setTimeout(cb, 1000 / 60);
+    };
 
-	var render = function () {
-		mat4.rotateX(modelMatrix, modelMatrix, 0.005);
-		mat4.rotateY(modelMatrix, modelMatrix, 0.01);
-		gl.uniformMatrix4fv(modelLocation, false, modelMatrix);
+  var render = function () {
+    mat4.rotateX(modelMatrix, modelMatrix, 0.005);
+    mat4.rotateY(modelMatrix, modelMatrix, 0.01);
+    gl.uniformMatrix4fv(modelLocation, false, modelMatrix);
 
-		mat3.normalFromMat4(normalMatrix, modelMatrix);
-		gl.uniformMatrix3fv(normalLocation, false, normalMatrix);
+    mat3.normalFromMat4(normalMatrix, modelMatrix);
+    gl.uniformMatrix3fv(normalLocation, false, normalMatrix);
 
-		gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
-		gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
-		requestAnimationFrame(render);
-	}
+    gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+    requestAnimationFrame(render);
+  };
 
-	render();
+  render();
 }
 
 function onClick() {
-	renderGlobe();
+  window.location.reload();
+}
+function generateSphere(latitudeBands, longitudeBands) {
+  var vertices = [];
+  var normals = [];
+  var uvs = [];
+  var indices = [];
+
+  for (let i = 0; i <= latitudeBands; i++) {
+    var theta = (i * Math.PI) / latitudeBands;
+    var sinTheta = Math.sin(theta);
+    var cosTheta = Math.cos(theta);
+
+    for (let j = 0; j <= longitudeBands; j++) {
+      var phi = (j * 2 * Math.PI) / longitudeBands;
+      var sinPhi = Math.sin(phi);
+      var cosPhi = Math.cos(phi);
+
+      var x = cosPhi * sinTheta;
+      var y = cosTheta;
+      var z = sinPhi * sinTheta;
+      var u = j / longitudeBands;
+      var v = i / latitudeBands;
+
+      normals.push(x);
+      normals.push(y);
+      normals.push(z);
+      uvs.push(u);
+      uvs.push(v);
+      vertices.push(x);
+      vertices.push(y);
+      vertices.push(z);
+      if (i < latitudeBands && j < longitudeBands) {
+        var first = i * (longitudeBands + 1) + j;
+        var second = first + longitudeBands + 1;
+        indices.push(first);
+        indices.push(second);
+        indices.push(first + 1);
+
+        indices.push(second);
+        indices.push(second + 1);
+        indices.push(first + 1);
+      }
+    }
+  }
+  return {
+    vertices: vertices,
+    normals: normals,
+    uvs: uvs,
+    indices: indices,
+  };
 }
 
-function generateSphere(latitudeBands, longitudeBands) {
-	const vertices = [];
-	const normals = [];
-	const uvs = [];
-	const indices = [];
-
-	for (let i = 0; i <= latitudeBands; i++) {
-		const theta = i * Math.PI / latitudeBands;
-		const sinTheta = Math.sin(theta);
-		const cosTheta = Math.cos(theta);
-
-		for (let j = 0; j <= longitudeBands; j++) {
-			const phi = j * 2 * Math.PI / longitudeBands;
-			const sinPhi = Math.sin(phi);
-			const cosPhi = Math.cos(phi);
-
-			const x = cosPhi * sinTheta;
-			const y = cosTheta;
-			const z = sinPhi * sinTheta;
-			const u = (j / longitudeBands);
-			const v = (i / latitudeBands);
-
-			normals.push(x);
-			normals.push(y);
-			normals.push(z);
-			uvs.push(u);
-			uvs.push(v);
-			vertices.push(x);
-			vertices.push(y);
-			vertices.push(z);
-			if (i < latitudeBands && j < longitudeBands) {
-				const first = i * (longitudeBands + 1) + j;
-				const second = first + longitudeBands + 1;
-				indices.push(first);
-				indices.push(second);
-				indices.push(first + 1);
-
-				indices.push(second);
-				indices.push(second + 1);
-				indices.push(first + 1);
-			}
-		}
-	}
-	return {
-		vertices: vertices,
-		normals: normals,
-		uvs: uvs,
-		indices: indices
-	}
+function changeLong(arg) {
+  urlParams.set("longitude", arg.value);
+  history.replaceState(null, null, "?" + urlParams.toString());
+}
+function changeLat(arg) {
+  urlParams.set("latitude", arg.value);
+  history.replaceState(null, null, "?" + urlParams.toString());
+}
+function changeProperties() {
+  var change = false;
+  if (urlParams.get("longitude") == null) {
+    urlParams.set("longitude", 30);
+    change = true;
+  }
+  if (urlParams.get("latitude") == null) {
+    urlParams.set("latitude", 30);
+    change = true;
+  }
+  if (change) {
+    history.replaceState(null, null, "?" + urlParams.toString());
+  }
+  document.getElementById("longitude").value = urlParams.get("longitude");
+  document.getElementById("latitude").value = urlParams.get("latitude");
 }
